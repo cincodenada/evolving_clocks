@@ -1,0 +1,8 @@
+Evolving Clocks
+=======================
+
+I came upon this simulation when Roger Ebert [shared it on his blog](http://blogs.suntimes.com/ebert/how-you-could-put-the-parts-in.html).  The [original video](http://www.youtube.com/watch?feature=player_embedded&v=mcAq9bmCeR0), by one cdk007, is a brilliant but simple counter-argument to the classic [watchmaker analogy](https://en.wikipedia.org/wiki/Watchmaker_analogy).  It states, quite simply, that if watches *could* evolve, they *would* - you could smash up a watch, put it in a bag, and in a million years, your bag would be full of working watches.
+
+Not only did this person make the argument, they ran the simulations to prove it, with excellent illustrations and charts.  I wrote a comment on Ebert's blog answering a couple of his questions, and one of the answers stated that if you tweaked the parameters, you could get a whole bunch of systems of seconds, hours, and minutes - not just human-centric ones.  That, of course, made me want to fiddle with the code myself even more.  So I downloaded the code and, finding MediaFire obnoxious, threw it up here on GitHub.  I assume that since it is linked to on a public YouTube video on a publically available download, there aren't license restrictions - I have contacted the author to inquire further.
+
+My intention with this repo is first to get the code up and running in GNU Octave, since I don't have access to MatLab, and then to start fiddling with the parameters to generate varying "seconds" as Ebert alluded to in his follow-up questions.  But mostly, I wanted to throw this up in a more accessible format than MediaFire.
