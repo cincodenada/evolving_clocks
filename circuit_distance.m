@@ -1,68 +1,95 @@
 function x = circuit_distance(c,primarynodes)
+%   c = gear connections
+%   primarynodes = those connected to housing
 
-if nargin == 1    
+%   If no primary nodes, assume all are connected (?)
+if nargin == 1
     primarynodes = 1:length(c);
 end
 
-d = ones(size(c));
-dtemp = ones(length(c),1) * 1e6;
+dist = ones(size(c));
+curdist = ones(length(c),1) * 1e6;
 pathmat{size(c,1),size(c,2)} = [];
 %xxx = waitbar(0,'Searching for Paths');
 
-%postmat{1:length(c)} = [];
+%   For each gear, get a list of gears that are
+%   somehow connected to it
+%myconnsmat{1:length(c)} = [];
 for i = 1:length(c)
-    postmat{i} = find(c(i,:) ~= 0);
+    myconnsmat{i} = find(c(i,:) ~= 0);
 end
 
-for N = 1:length(c)
+for pgear = 1:length(c)
     
-    if isempty(primarynodes(primarynodes == N));
-        continue;
+    % If this gear isn't connected to the housing,
+    % Skip it
+    % TODO: This limits found paths to end nodes, is that okay?
+    if isempty(primarynodes(primarynodes == pgear));
+        %continue;
     end
     
-    %if rem(N,5) == 0
-    %    waitbar(N/length(c));
-    %end
-    clear s
+    % Update the waitbar
+    if rem(pgear,5) == 0
+        waitbar(pgear/length(c));
+    end
+
+    clear csteps 
     clear nn
-    clear post
+    clear myconns
     
-    s = N;
+    % Initialize csteps to this gear
+    csteps = pgear;
     pathlength = 1;
     
-    while pathlength > 0   
-        nn = s(pathlength);
-        post = postmat{nn};
+    while pathlength > 0
+        cgear = csteps(pathlength);
+        myconns = myconnsmat{cgear};
         
         foundtip = 0;
-        for test = 1:length(post)
-            if dtemp(post(test)) > pathlength
-                dtemp(post(test)) = pathlength;
-                pathmat{N,post(test)} = [s post(test)];
-                s = [s post(test)];
+        for curtest = 1:length(myconns)
+            curconn = myconns(curtest);
+            if curconn==pgear
+                continue;
+            end
+            % If we've found a path shorter than the shortest
+            % Then update the path matrix
+            if curdist(curconn) > pathlength
+                curdist(curconn) = pathlength;
+                pathmat{pgear,curconn} = [csteps curconn];
+                csteps = [csteps curconn];
                 pathlength = pathlength + 1;
                 foundtip = 1;
                 break;
             end
         end
         
-        if  isempty(test) && foundtip == 0
-            s = s(1:length(s)-1);
+        if  isempty(curtest) && foundtip == 0
+            csteps = csteps(1:length(csteps)-1);
             pathlength = pathlength - 1;
-        elseif test == length(post) && foundtip == 0
-            s = s(1:length(s)-1);
+        elseif curtest == length(myconns) && foundtip == 0
+            csteps = csteps(1:length(csteps)-1);
             pathlength = pathlength - 1;
         end
     end
 
-    d(N,:) = dtemp;
-    dtemp = ones(length(c),1) * 1e6;
+    dist(pgear,:) = curdist;
+    curdist = ones(length(c),1) * 1e6;
     
 end
 
-d(d == 1e6) = NaN;
+for r = 1:size(pathmat,1)
+    for c = (r+1):size(pathmat,2)
+        if isempty(pathmat{r,c})
+            pathmat{r,c} = fliplr(pathmat{c,r}) 
+        elseif isempty(pathmat{c,r})
+            pathmat{c,r} = fliplr(pathmat{r,c})
+        end
+    end
+end
 
-x{1} = d;
+dist(dist == 1e6) = NaN;
+
+x{1} = dist;
 x{2} = pathmat;
 
 %close(xxx);
