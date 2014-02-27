@@ -3,10 +3,11 @@ function output = clockplot
 %This function compiles the data out of every population file in a single
 %folder, considered 1 independent evolution.  The output can then be passed
 %to clockplot2.m for better display.
+dirsep='/'
 
 p = uigetdir;
 g = 1;
-f = '/Generation 1.mat';
+f = 'Generation 1.mat';
 output = zeros(1e3,8);
 
 while exist([p f],'file')
@@ -34,9 +35,8 @@ while exist([p f],'file')
     %    break;
     %end
     g = g+1;
-    f = ['/Generation ',num2str(g),'.mat'];
+    f = [dirsep,'Generation ',num2str(g),'.mat'];
     
 end
 
 plot(output);
-        

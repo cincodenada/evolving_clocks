@@ -6,6 +6,7 @@ function scoremat = clockevolution2(g)
 
 warning('off','all');
 
+dirsep = '/';
 N = 1e4;
 %scoremat = zeros(N,g);
 
@@ -44,12 +45,16 @@ elseif strcmp(answer,'No')
     p = uigetdir;
     
     for c=1:N
+        % Generate the initial matrix
         ck = rand(40,41);
-        ck(ck<0.06) = 1;
-        ck(ck<0.1) = 2;
-        ck(ck<1) = 0;
+        ck(ck<0.06) = 1;    % 6% chance of being connected at axil
+        ck(ck<0.1) = 2;     % 10% chance of being connected at teeth
+        ck(ck<1) = 0;       % 84% chance of not being connected
+        % Tooth count: 40 random numbers, 0-999
         ck(:,41) = round(rand(40,1) * 1e6);
+        disp(ck);
         
+        % Run the test
         output = clocktest(ck);
         
         pop1{c}{1} = (output{1});
@@ -66,14 +71,14 @@ elseif strcmp(answer,'No')
     end
     
     pop = pop1;
-    f = ['\Generation 1.mat'];
+    f = [dirsep,'Generation 1.mat'];
     save([p f],'pop');
     
 else 
     return
 end
 
-for gen = startgen+1:startgen+g
+for gen = (startgen+1):(startgen+g)
     disp(gen);
     pause(0.1);
     for battle=1:N     
@@ -162,7 +167,7 @@ for gen = startgen+1:startgen+g
     %scoremat(:,gen) = score;
     scoremat = [];
 
-    f = ['\Generation ',num2str(gen),'.mat'];
+    f = [dirsep,'Generation ',num2str(gen),'.mat'];
     
     if rem(gen,10) == 0
         pop = pop1;

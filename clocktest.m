@@ -9,10 +9,16 @@ function output = clocktest(ck)
 %   simulation stops.  This saves cpu time.
 
 %Structure of a clock matrix
+%Connection numbers:
+%           0       1       2
+%gear       n.c.    teeth   axle
+%hand       n.c.    end     end
+%ratchet    n.c.    center  teeth
+%spring     n.c.    end     end
+%base       n.c.    ?       ?
+%
 %30 gears:  r 1:30,     c 1:40 connectivity
-%           1=connected by teeth
-%           2=fused at axil
-%           r 1:30,     c 41:100 sum = number teeth
+%           r 1:30,     c 41 = number teeth
 %7 hands:   r 31:37,    c 1:40 connectivity
 %1 ratchet  r 38,       c 1:40 connectivity
 %1 spring:  r 39,       c 1:40 connectivity
@@ -27,13 +33,17 @@ output{3} = [];
 output{4} = [];
 output{5} = [];
 
+disp('Ensuring symmetrical connections...');
+%   extract just the connections (exclude gear teeth)
 conn = ck(1:40,1:40);
 %   Connectivity is bidirectional, make sure the matrix is so.
 %   This is just a physical fact of the universe.  If A touches B, B must
 %   touch A.  
 for r=1:40
     for c=1:40
+        % Check if conns are the same
         if conn(r,c) ~= conn(c,r)
+            % Flip a coin to determine which connection to use
             temp = round(rand(1));
             if temp == 1
                 conn(r,c) = conn(c,r);
@@ -44,14 +54,20 @@ for r=1:40
     end
 end
 
+disp('Checking gear sizes...');
+% Extract tooth counts, divide by 10k (end result 0-100)
 gearsize = round(ck(1:30,41)/1e4);
+% Min tooth count is 5 (adjusting for 0-based)
 gearsize(gearsize < 4) = 4;
 
+disp('Sanity check gear teeth...');
 %Gears cannot be connected to more gears than teeth they have. Again, just
 %making the simulation physically realistic.
 for r=1:30
+    % For each gear, pull connections that are to teeth
     g = find(conn(r,1:30) == 1);
     if length(g) > gearsize(r)
+        % If we have too many, disconnect a random set of extras
         temp = randperm(length(g));
         temp = temp(gearsize(r)+1:length(g));
         conn(r,g(temp)) = 0;
@@ -61,7 +77,9 @@ end
 
 %   Hands can only be connected to max 4 objects because they only have 4
 %   connection points.
+%   Two ends, with two faces - can connect on either face
 
+disp('Sanity check hands...');
 for r=31:37
     g = find(conn(r,1:40) ~= 0);
     if length(g) > 4
@@ -72,6 +90,7 @@ for r=31:37
     end
 end
 
+disp('Sanity check ratchet...');
 %   Ratchet can only be connected to 1 object via its teeth and 2 objects 
 %   via its center, again because of the number of connection points.
 g = find(conn(38,1:40) == 2);
@@ -89,8 +108,9 @@ if length(h) > 2
     conn(h(temp),38) = 0;
 end
 
+disp('Sanity check spring...');
 %   Spring can only be attached to max 4 objects.  Spring has 2 ends, each
-%   end can connect to two objects (1 on each face of the spring.
+%   end can connect to two objects (1 on each face of the spring).
 g = find(conn(39,1:40) ~= 0);
 if length(g) > 4
     temp = randperm(length(g));
@@ -100,23 +120,35 @@ if length(g) > 4
 end
 
 
+disp('Extra symmetry check...');
+%   This seems unnecessary...should already be done
+%   TODO: Just emit an error if they're not the same, then remove?
 for r=1:40
     for c=1:r
         conn(c,r) = conn(r,c);
     end
 end
 
-temp99 = ck;
-temp99(1:40,1:40) = conn;
-output{1} = temp99;
+disp('Building output matrix...');
+%   Generate our output matrix, copying our sanity-checked values back in
+outmat = ck;
+outmat(1:40,1:40) = conn;
+output{1} = outmat;
 
+disp('Extracting gears...');
+%   Extract gears that are connected to each other via axle
 gconn2 = zeros(30);
 gconn2(conn(1:30,1:30)==2) = 2;
+%   gconn2 is now a matrix of connections for just gears connected to each other's axles
 
+disp('Extracting housing-bound gears...');
+%   Extract a list of gears that are attached to the housing
 keep = zeros(30,1);
 baseg = find(conn(40,1:30) ~= 0);
 keep(baseg) = 1;
+%   Keep is now a list of true/false for is the gear attached to the housing
 
+disp('Calculating gear paths...');
 %   The circuit_distance.m function finds the shortest path between every 
 %   pair of gears.
 d2 = circuit_distance(gconn2,baseg);
